@@ -6,11 +6,26 @@ import entryRoutes from './routes/entries.js'
 const app = express()
 
 // ── Middleware ──
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'https://meatbyalvibusinessdashboard.netlify.app')
+const defaultOrigins = [
+  'https://meatbyalvibusinessdashboard.netlify.app',
+  'http://localhost:5173'
+]
+const allowedOrigins = (process.env.CLIENT_ORIGIN || defaultOrigins.join(','))
   .split(',')
   .map((o) => o.trim())
 
-app.use(cors({ origin: allowedOrigins }))
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-side requests without origin and allow configured origins.
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS origin denied: ${origin}`))
+    }
+  },
+  optionsSuccessStatus: 200
+}))
+app.options('*', cors())
 app.use(express.json())
 
 // Ensure a MongoDB connection exists before handling any /api route.
