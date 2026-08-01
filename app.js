@@ -6,7 +6,7 @@ import entryRoutes from './routes/entries.js'
 const app = express()
 
 // ── Middleware ──
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'https://meatbyalvibusinessdashboard.netlify.app')
   .split(',')
   .map((o) => o.trim())
 
