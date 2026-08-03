@@ -1,5 +1,11 @@
 import Entry from '../models/Entry.js'
 
+const normalizeNumber = (value) => {
+  if (value === '' || value === null || value === undefined) return 0
+  const numericValue = Number(value)
+  return Number.isNaN(numericValue) ? 0 : numericValue
+}
+
 // ── Helper: build a Mongo date-range filter from optional ?from=&to= query params ──
 const buildDateFilter = (query) => {
   const filter = {}
@@ -66,13 +72,13 @@ export const createEntry = async (req, res) => {
 
     const entry = new Entry({
       date,
-      orders,
-      revenue,
-      grossProfit,
-      totalDeliveryCost: totalDeliveryCost || 0,
-      totalPackagingCost: totalPackagingCost || 0,
-      adsExpense: adsExpense || 0,
-      otherExpenses: otherExpenses || 0,
+      orders: normalizeNumber(orders),
+      revenue: normalizeNumber(revenue),
+      grossProfit: normalizeNumber(grossProfit),
+      totalDeliveryCost: normalizeNumber(totalDeliveryCost),
+      totalPackagingCost: normalizeNumber(totalPackagingCost),
+      adsExpense: normalizeNumber(adsExpense),
+      otherExpenses: normalizeNumber(otherExpenses),
       notes: notes || ''
     })
 
@@ -93,9 +99,17 @@ export const createEntry = async (req, res) => {
 // PUT /api/entries/:id — update an existing entry
 export const updateEntry = async (req, res) => {
   try {
+    const payload = { ...req.body }
+
+    for (const field of ['orders', 'revenue', 'grossProfit', 'totalDeliveryCost', 'totalPackagingCost', 'adsExpense', 'otherExpenses']) {
+      if (Object.prototype.hasOwnProperty.call(payload, field)) {
+        payload[field] = normalizeNumber(payload[field])
+      }
+    }
+
     const updated = await Entry.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: req.body },
+      { $set: payload },
       { new: true, runValidators: true }
     )
 
