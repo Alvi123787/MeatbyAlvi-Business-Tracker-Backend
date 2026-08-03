@@ -50,8 +50,8 @@ export const createEntry = async (req, res) => {
       orders,
       revenue,
       grossProfit,
-      deliveryCostPerOrder,
-      packagingCostPerOrder,
+      totalDeliveryCost,
+      totalPackagingCost,
       adsExpense,
       otherExpenses,
       notes
@@ -69,8 +69,8 @@ export const createEntry = async (req, res) => {
       orders,
       revenue,
       grossProfit,
-      deliveryCostPerOrder: deliveryCostPerOrder || 0,
-      packagingCostPerOrder: packagingCostPerOrder || 0,
+      totalDeliveryCost: totalDeliveryCost || 0,
+      totalPackagingCost: totalPackagingCost || 0,
       adsExpense: adsExpense || 0,
       otherExpenses: otherExpenses || 0,
       notes: notes || ''

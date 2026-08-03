@@ -28,15 +28,15 @@ const entrySchema = new mongoose.Schema(
       type: Number,
       required: [true, "Today's Orders Profit (Gross) is required"]
     },
-    deliveryCostPerOrder: {
+    totalDeliveryCost: {
       type: Number,
       default: 0,
-      min: [0, 'Delivery cost per order cannot be negative']
+      min: [0, 'Total delivery cost cannot be negative']
     },
-    packagingCostPerOrder: {
+    totalPackagingCost: {
       type: Number,
       default: 0,
-      min: [0, 'Packaging cost per order cannot be negative']
+      min: [0, 'Total packaging cost cannot be negative']
     },
     adsExpense: {
       type: Number,
@@ -55,8 +55,6 @@ const entrySchema = new mongoose.Schema(
     },
 
     // ── Computed & stored fields (recalculated on every save) ──
-    totalDeliveryCost: { type: Number, default: 0 },
-    totalPackagingCost: { type: Number, default: 0 },
     totalExpenses: { type: Number, default: 0 },
     netProfitLoss: { type: Number, default: 0 }
   },
@@ -65,11 +63,12 @@ const entrySchema = new mongoose.Schema(
 
 // Recompute derived fields every time an entry is saved (create or update via .save()).
 entrySchema.pre('save', function (next) {
-  this.totalDeliveryCost = this.orders * this.deliveryCostPerOrder
-  this.totalPackagingCost = this.orders * this.packagingCostPerOrder
-  this.totalExpenses =
-    this.totalDeliveryCost + this.totalPackagingCost + this.adsExpense + this.otherExpenses
-  this.netProfitLoss = this.grossProfit - this.totalExpenses
+  const totalDeliveryCost = Number(this.totalDeliveryCost || 0)
+  const totalPackagingCost = Number(this.totalPackagingCost || 0)
+  this.totalDeliveryCost = totalDeliveryCost
+  this.totalPackagingCost = totalPackagingCost
+  this.totalExpenses = totalDeliveryCost + totalPackagingCost + Number(this.adsExpense || 0) + Number(this.otherExpenses || 0)
+  this.netProfitLoss = Number(this.grossProfit || 0) - this.totalExpenses
   next()
 })
 
@@ -83,17 +82,14 @@ entrySchema.pre('findOneAndUpdate', function (next) {
   this.model.findOne(this.getQuery()).then((existing) => {
     if (!existing) return next()
 
-    const orders = $set.orders ?? existing.orders
-    const deliveryCostPerOrder = $set.deliveryCostPerOrder ?? existing.deliveryCostPerOrder
-    const packagingCostPerOrder = $set.packagingCostPerOrder ?? existing.packagingCostPerOrder
+    const totalDeliveryCost = Number($set.totalDeliveryCost ?? existing.totalDeliveryCost ?? 0)
+    const totalPackagingCost = Number($set.totalPackagingCost ?? existing.totalPackagingCost ?? 0)
     const adsExpense = $set.adsExpense ?? existing.adsExpense
     const otherExpenses = $set.otherExpenses ?? existing.otherExpenses
     const grossProfit = $set.grossProfit ?? existing.grossProfit
 
-    const totalDeliveryCost = orders * deliveryCostPerOrder
-    const totalPackagingCost = orders * packagingCostPerOrder
-    const totalExpenses = totalDeliveryCost + totalPackagingCost + adsExpense + otherExpenses
-    const netProfitLoss = grossProfit - totalExpenses
+    const totalExpenses = totalDeliveryCost + totalPackagingCost + Number(adsExpense || 0) + Number(otherExpenses || 0)
+    const netProfitLoss = Number(grossProfit || 0) - totalExpenses
 
     this.setUpdate({
       ...update,
