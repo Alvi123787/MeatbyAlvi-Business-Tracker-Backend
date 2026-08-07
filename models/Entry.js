@@ -12,6 +12,7 @@ const entrySchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Date is required'],
       // Only one entry per calendar day — keeps the tracker 1 row per day, like the sheet.
+      unique: true,
       index: true
     },
     orders: {

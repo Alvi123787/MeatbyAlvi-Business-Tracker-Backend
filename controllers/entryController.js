@@ -119,6 +119,13 @@ export const updateEntry = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'Entry updated successfully', data: updated })
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'An entry for this date already exists.'
+      })
+    }
+
     console.error('Error updating entry:', error.message)
     res.status(500).json({ success: false, message: error.message || 'Failed to update entry' })
   }

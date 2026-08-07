@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import connectDB from './db.js'
 import entryRoutes from './routes/entries.js'
+import authRoutes from './routes/auth.js'
+import authMiddleware from './middleware/authMiddleware.js'
 
 const app = express()
 
@@ -28,10 +30,20 @@ app.use(cors({
 app.options('*', cors())
 app.use(express.json())
 
-// Ensure a MongoDB connection exists before handling any /api route.
+// ── Routes ──
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'MeatbyAlvi Business Tracker API is running' })
+})
+
+// Public — no DB connection needed, no auth token required.
+app.use('/api/auth', authRoutes)
+
+// Ensure a MongoDB connection exists before handling any /api/entries route.
 // On Vercel this runs per invocation, but connectDB() caches the connection
 // so a warm instance reuses it instead of reconnecting every time.
-app.use(async (req, res, next) => {
+// Scoped to /api/entries only — the login route above doesn't need the DB,
+// so it stays reachable even if MongoDB is briefly unavailable.
+const requireDb = async (req, res, next) => {
   try {
     await connectDB()
     next()
@@ -42,14 +54,9 @@ app.use(async (req, res, next) => {
       message: 'Database connection failed. Check MONGO_URI in your environment settings.'
     })
   }
-})
+}
 
-// ── Routes ──
-app.get('/', (req, res) => {
-  res.json({ success: true, message: 'MeatbyAlvi Business Tracker API is running' })
-})
-
-app.use('/api/entries', entryRoutes)
+app.use('/api/entries', requireDb, authMiddleware, entryRoutes)
 
 // ── 404 handler ──
 app.use((req, res) => {
