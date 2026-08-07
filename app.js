@@ -15,6 +15,7 @@ const defaultOrigins = [
 const allowedOrigins = (process.env.CLIENT_ORIGIN || defaultOrigins.join(','))
   .split(',')
   .map((o) => o.trim())
+  .filter(Boolean)
 
 app.use(cors({
   origin: (origin, callback) => {
